@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "uitest")
+@ConfigurationProperties(prefix = "selenide.setting")
 public class SelenideProperties {
 
     /**
@@ -15,13 +15,29 @@ public class SelenideProperties {
     /**
      * ドライバ
      */
-    private String drivaer;
+    private String driver;
 
 
     /**
      * 実績フォルダルート
      */
     private String resultRoot;
+
+    /**
+     * ヘッドレスモード
+     */
+    private boolean headless;
+
+
+    /**
+     * 接続URLのルート
+     */
+
+
+    /**
+     *
+     */
+    private String chromeDriver;
 
     public boolean isHeadless() {
         return headless;
@@ -31,10 +47,6 @@ public class SelenideProperties {
         this.headless = headless;
     }
 
-    /**
-     * ヘッドレスモード
-     */
-    private boolean headless;
 
     public String getBrowser() {
         return browser;
@@ -44,12 +56,12 @@ public class SelenideProperties {
         this.browser = browser;
     }
 
-    public String getDrivaer() {
-        return drivaer;
+    public String getDriver() {
+        return driver;
     }
 
-    public void setDrivaer(String drivaer) {
-        this.drivaer = drivaer;
+    public void setDriver(String driver) {
+        this.driver = driver;
     }
 
     public String getResultRoot() {
@@ -60,6 +72,20 @@ public class SelenideProperties {
         this.resultRoot = resultRoot;
     }
 
+    public String getBaseUrl() {
+        return baseUrl;
+    }
 
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+    private String baseUrl;
 
+    public String getChromeDriver() {
+        return chromeDriver;
+    }
+
+    public void setChromeDriver(String chromeDriver) {
+        this.chromeDriver = chromeDriver;
+    }
 }

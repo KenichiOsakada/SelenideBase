@@ -31,6 +31,26 @@ public class WebDriverListenerImpl implements WebDriverEventListener {
     }
 
     @Override
+    public void beforeAlertAccept(WebDriver webDriver) {
+
+    }
+
+    @Override
+    public void afterAlertAccept(WebDriver webDriver) {
+
+    }
+
+    @Override
+    public void afterAlertDismiss(WebDriver webDriver) {
+
+    }
+
+    @Override
+    public void beforeAlertDismiss(WebDriver webDriver) {
+
+    }
+
+    @Override
     public void beforeNavigateTo(String s, WebDriver webDriver) {
 
     }
@@ -92,12 +112,12 @@ public class WebDriverListenerImpl implements WebDriverEventListener {
     }
 
     @Override
-    public void beforeChangeValueOf(WebElement webElement, WebDriver webDriver) {
+    public void beforeChangeValueOf(WebElement webElement, WebDriver webDriver, CharSequence[] charSequences) {
 
     }
 
     @Override
-    public void afterChangeValueOf(WebElement webElement, WebDriver webDriver) {
+    public void afterChangeValueOf(WebElement webElement, WebDriver webDriver, CharSequence[] charSequences) {
 
     }
 

@@ -27,4 +27,13 @@ public abstract class SelenideBasePageObject{
         Selenide.page(pageObjectClass);
         baseClass.screenShot(pageObjectClass);
     }
+
+    /**
+     * タイトルを取得します
+     * @return タイトル
+     */
+    public String getTitle(){
+        return baseClass.getDriver().getTitle();
+    }
+
 }

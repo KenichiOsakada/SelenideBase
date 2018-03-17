@@ -3,19 +3,18 @@ package jp.ne.oskd.techverify.selenide;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.WebDriverRunner;
+import com.codeborne.selenide.junit.TextReport;
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
-import org.apache.commons.lang3.StringUtils;
+import io.netty.util.internal.StringUtil;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxProfile;
-import org.openqa.selenium.remote.CapabilityType;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +33,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Selenideで検証を行うためのBaseクラス
@@ -71,6 +72,10 @@ public abstract class SelenideBase {
     @Autowired
     private SelenideProperties properties;
 
+    @Rule
+    public TestRule report = new TextReport();
+
+
     /**
      * 　WebDriver
      */
@@ -104,6 +109,11 @@ public abstract class SelenideBase {
         setListeners();
     }
 
+    @After
+    public void after() {
+        driver.close();
+    }
+
     /**
      * WebDriverを設定します
      */
@@ -126,20 +136,20 @@ public abstract class SelenideBase {
      * FireFox用の設定を行います
      */
     private void setFireFox() {
-        Configuration.browser = WebDriverRunner.FIREFOX;
-        // プロファイルの作成
-        FirefoxProfile profile = new FirefoxProfile();
-        // ダウンロードするファイルの保存先フォルダを指定
-        // ダウンロードフォルダ
-        profile.setPreference("browser.download.dir", getFileDownloadPath());
-        // ★ここが大事★
-        // 指定したmimeタイプは有無を言わさずダウンロードする
-        profile.setPreference("browser.helperApps.neverAsk.saveToDisk",
-                "text/html, text/plain, application/vnd.ms-excel, text/csv, application/zip, text/comma-separated-values, application/octet-stream");
-        // ダウンロードダイアログを見せないようにする
-        profile.setPreference("browser.download.manager.showWhenStarting", false);
-
-        driver = new FirefoxDriver(profile);
+//        Configuration.browser = WebDriverRunner.FIREFOX;
+//        // プロファイルの作成
+//        FirefoxProfile profile = new FirefoxProfile();
+//        // ダウンロードするファイルの保存先フォルダを指定
+//        // ダウンロードフォルダ
+//        profile.setPreference("browser.download.dir", getFileDownloadPath());
+//        // ★ここが大事★
+//        // 指定したmimeタイプは有無を言わさずダウンロードする
+//        profile.setPreference("browser.helperApps.neverAsk.saveToDisk",
+//                "text/html, text/plain, application/vnd.ms-excel, text/csv, application/zip, text/comma-separated-values, application/octet-stream");
+//        // ダウンロードダイアログを見せないようにする
+//        profile.setPreference("browser.download.manager.showWhenStarting", false);
+//
+//        driver = new FirefoxDriver(profile);
     }
 
     /**
@@ -147,13 +157,13 @@ public abstract class SelenideBase {
      */
     private void setChrome() {
         Configuration.browser = WebDriverRunner.CHROME;
+        //自動ダウンロードされない？？？
+        System.setProperty("webdriver.chrome.driver", getClass().getResource(properties.getChromeDriver()).getPath());
 
         ChromeOptions chromeOptions = new ChromeOptions();
         //HeadLessモード指定
         if (properties.isHeadless()) {
-            Configuration.headless = true;
-            //最新バージョン(4.9)では以下設定でも可能
-            //            chromeOptions.addArguments("--headless");
+            chromeOptions.addArguments("--headless");
         }
         Map<String, Object> chromePrefs = new HashMap<>();
         //PopUp表示を抑制
@@ -163,11 +173,7 @@ public abstract class SelenideBase {
         //ダウンロード先指定ダイアログ表示抑制
         chromePrefs.put("download.prompt_for_download", false);
         chromeOptions.setExperimentalOption("prefs", chromePrefs);
-        DesiredCapabilities cap = DesiredCapabilities.chrome();
-        //安全でないパスワード警告を無効に
-        cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
-        cap.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
-        driver = new ChromeDriver(cap);
+        driver = new ChromeDriver(chromeOptions);
     }
 
     /**
@@ -179,8 +185,8 @@ public abstract class SelenideBase {
         rootPath = properties.getResultRoot();
 
         //未指定の場合はTargetFolder配下に作成
-        if (StringUtils.isNoneEmpty(rootPath)) {
-            rootPath = Paths.get("/target/UITest").toAbsolutePath().toString();
+        if (StringUtil.isNullOrEmpty(rootPath)) {
+            rootPath = Paths.get("target/UITest").toAbsolutePath().toString();
         }
 
         //フォルダの相対パスを取得
@@ -243,7 +249,12 @@ public abstract class SelenideBase {
      * @return 実績格納フォルダの相対パス
      */
     protected String getResultFolderRelativePath() {
-        return getClass().getName().replaceAll("\\.", File.separator);
+        String fileSepalator = File.separator;
+        if (fileSepalator.equals("\\")) {
+            fileSepalator = "\\\\";
+        }
+
+        return getClass().getName().replaceAll("\\.", fileSepalator);
     }
 
     /**
@@ -275,7 +286,11 @@ public abstract class SelenideBase {
      * @throws MalformedURLException URLエラー
      */
     public <PageObjectClass extends SelenideBasePageObject> PageObjectClass open(String url, Class<PageObjectClass> pageObjectClass) throws MalformedURLException {
-        PageObjectClass pageObject = Selenide.open(new URL(url), pageObjectClass);
+        String openUrl = properties.getBaseUrl() + url;
+
+        PageObjectClass pageObject = Selenide.open(new URL(openUrl), pageObjectClass);
+
+
         screenShot(pageObjectClass);
         pageObject.setBaseClass(this);
         return pageObject;
@@ -315,9 +330,8 @@ public abstract class SelenideBase {
      * 最新のダウンロードファイルを取得します
      *
      * @return 最新のダウンロードファイル
-     * @throws InterruptedException ダウンロードファイル取得監視エラー
      */
-    public File getLatestDownloadFile() throws InterruptedException {
+    public File getLatestDownloadFile() {
         final File downloadDir = new File(getFileDownloadPath());
 
         WebDriverWait waitForUpload = new WebDriverWait(driver, 1000);
@@ -326,17 +340,26 @@ public abstract class SelenideBase {
             public Boolean apply(WebDriver _driver) {
 
                 File latestFile = getLatestFile(downloadDir);
-
-                //ファイルが取得できなかったら待機
-                if (latestFile == null) {
-                    return false;
-                }
                 //ファイル名からダウンロード中か否かを判定
-                return !latestFile.getName().endsWith(".crdownload") && !latestFile.getName().endsWith(".tmp");
+                return judgeDownloading(latestFile);
             }
         });
+        File retFile = getLatestFile(downloadDir);
 
-        return getLatestFile(downloadDir);
+        if (judgeDownloading(retFile)) {
+            return retFile;
+        }
+        return null;
+    }
+
+    /**
+     * ダウンロード中か否かを判定します
+     *
+     * @param target
+     * @return
+     */
+    private static boolean judgeDownloading(File target) {
+        return target != null &&!target.getName().endsWith(".crdownload") && !target.getName().endsWith(".tmp");
     }
 
     /**
@@ -384,5 +407,34 @@ public abstract class SelenideBase {
      */
     protected WebDriverListenerImpl createWebEventLisner() {
         return new WebDriverListenerImpl(this);
+    }
+
+
+    public WebDriver getDriver() {
+        return driver;
+    }
+
+
+    /**
+     * RootUrlの相対パスの確認を行います
+     *
+     * @param message  エラー時メッセージ
+     * @param expected 想定
+     */
+    public void assertCurrentUrl(String message, String expected) {
+        assertEquals(message, properties.getResultRoot() + expected, driver.getCurrentUrl());
+    }
+
+    /**
+     * Hrf属性のURL確認を行います。
+     * <br>
+     * Href属性は、相対パスで記載していても絶対パスに変換されるため、当メソッドで確認する
+     *
+     * @param message   エラー時メッセージ
+     * @param expected  想定URL
+     * @param actualUrl 実URL
+     */
+    public void assertHefUrl(String message, String expected, String actualUrl) {
+        assertEquals(message, properties.getResultRoot() + expected, actualUrl);
     }
 }
