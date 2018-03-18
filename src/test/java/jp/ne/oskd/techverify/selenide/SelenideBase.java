@@ -75,6 +75,12 @@ public abstract class SelenideBase {
     @Rule
     public TestRule report = new TextReport();
 
+    /**
+     * メソッド名取得のためのルール
+     */
+    @Rule
+    public TestName testName = new TestName();
+
 
     /**
      * 　WebDriver
@@ -85,13 +91,6 @@ public abstract class SelenideBase {
      * 実績格納フォルダルート
      */
     private String rootDir;
-
-    /**
-     * メソッド名取得のためのルール
-     */
-    @Rule
-    public TestName testName = new TestName();
-
 
     /**
      * 実績ファイル数
@@ -130,6 +129,8 @@ public abstract class SelenideBase {
         Configuration.fastSetValue = true;
         //スクリーンショットの設定ディレクトリ設定
         Configuration.reportsFolder = getScreenShotFolder();
+
+        Configuration.baseUrl=properties.getBaseUrl();
     }
 
     /**
@@ -226,14 +227,14 @@ public abstract class SelenideBase {
      * @param delTargetFile ファイルオブジェクト
      * @throws Exception 対象のファイルオブジェクトの削除エラー
      */
-    private static void recursiveDeleteFile(File delTargetFile) throws Exception {
+    private static void recursiveDeleteFile(File delTargetFile) {
 
         // 存在しない場合は処理終了
         if (!delTargetFile.exists()) {
             return;
         }
         // 対象がディレクトリの場合は再帰処理
-        if (delTargetFile.isDirectory()) {
+        if (delTargetFile.isDirectory() && delTargetFile.listFiles() != null) {
             for (File child : delTargetFile.listFiles()) {
                 recursiveDeleteFile(child);
             }
@@ -285,11 +286,9 @@ public abstract class SelenideBase {
      * @return 起動ページを詰めたPageObject
      * @throws MalformedURLException URLエラー
      */
-    public <PageObjectClass extends SelenideBasePageObject> PageObjectClass open(String url, Class<PageObjectClass> pageObjectClass) throws MalformedURLException {
-        String openUrl = properties.getBaseUrl() + url;
+    public <PageObjectClass extends SelenideBasePageObject> PageObjectClass open(String url, Class<PageObjectClass> pageObjectClass){
 
-        PageObjectClass pageObject = Selenide.open(new URL(openUrl), pageObjectClass);
-
+        PageObjectClass pageObject = Selenide.open(url, pageObjectClass);
 
         screenShot(pageObjectClass);
         pageObject.setBaseClass(this);
@@ -338,15 +337,13 @@ public abstract class SelenideBase {
 
         waitForUpload.until(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver _driver) {
-
-                File latestFile = getLatestFile(downloadDir);
                 //ファイル名からダウンロード中か否かを判定
-                return judgeDownloading(latestFile);
+                return isDownloadFinish( getLatestFile(downloadDir));
             }
         });
         File retFile = getLatestFile(downloadDir);
 
-        if (judgeDownloading(retFile)) {
+        if (isDownloadFinish(retFile)) {
             return retFile;
         }
         return null;
@@ -355,11 +352,11 @@ public abstract class SelenideBase {
     /**
      * ダウンロード中か否かを判定します
      *
-     * @param target
-     * @return
+     * @param target 対象ファイル
+     * @return ダウンロード完了か否か
      */
-    private static boolean judgeDownloading(File target) {
-        return target != null &&!target.getName().endsWith(".crdownload") && !target.getName().endsWith(".tmp");
+    private static boolean isDownloadFinish(File target) {
+        return target != null && !target.getName().endsWith(".crdownload") && !target.getName().endsWith(".tmp");
     }
 
     /**
@@ -435,6 +432,6 @@ public abstract class SelenideBase {
      * @param actualUrl 実URL
      */
     public void assertHefUrl(String message, String expected, String actualUrl) {
-        assertEquals(message, properties.getResultRoot() + expected, actualUrl);
+        assertEquals(message, properties.getBaseUrl() + expected, actualUrl);
     }
 }
