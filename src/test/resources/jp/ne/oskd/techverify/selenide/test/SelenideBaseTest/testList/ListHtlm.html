@@ -1,0 +1,35 @@
+<script type='text/javascript'>
+    function handleDownload(id) {
+        var content = 'あいうえお';
+        var blob = new Blob([ content ], { "type" : "text/plain" });
+        if (window.navigator.msSaveBlob) {
+            window.navigator.msSaveBlob(blob, "test.txt");
+            window.navigator.msSaveOrOpenBlob(blob, "test.txt");
+        } else {
+            document.getElementById(id).href = window.URL.createObjectURL(blob);
+        }
+    }
+</script>
+<table>
+    <tr>
+        <th>Header1</th>
+        </tr>
+    <tr>
+        <td>Data1</td>
+    </tr>
+    <tr>
+        <td><a href="/users">Data2</a></td>
+    </tr>
+    <tr>
+        <td>Input:<input type="text" name="NAME"></td>
+    </tr>
+    <tr>
+        <td><input type="file" name="FILE"></td>
+    </tr>
+    <tr>
+        <td><a id="download" href="#" download="test.txt" onclick="handleDownload('download')">DownLoad</a></td>
+    </tr>
+    <tr>
+        <td><a id="download2" href="#" download="test2.txt" onclick="handleDownload('download2')">DownLoad</a></td>
+    </tr>
+</table>

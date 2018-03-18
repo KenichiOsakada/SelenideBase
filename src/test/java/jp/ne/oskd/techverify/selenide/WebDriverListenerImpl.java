@@ -24,6 +24,7 @@ public class WebDriverListenerImpl implements WebDriverEventListener {
 
     /**
      * SelenideBaseを返却します
+     *
      * @return SelenideBase
      */
     protected SelenideBase getBaseClass() {

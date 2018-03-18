@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * "table"に相応するSelenideElement
- *
+ * <p>
  * "th"要素と
  * "td"の一覧を保持する
  */
@@ -19,7 +19,7 @@ public class Table extends ElementsContainer {
     /**
      * TableHeader
      */
-    @FindBy(how = How.TAG_NAME,using = "tr")
+    @FindBy(how = How.TAG_NAME, using = "tr")
     @Getter
     private List<TableRow> tableRows;
 }

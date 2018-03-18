@@ -1,6 +1,5 @@
 package jp.ne.oskd.techverify.selenide.test.pageObject.elementContainer;
 
-import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.ElementsContainer;
 import com.codeborne.selenide.SelenideElement;
 import lombok.Getter;

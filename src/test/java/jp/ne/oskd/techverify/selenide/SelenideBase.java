@@ -27,7 +27,6 @@ import org.springframework.test.context.support.DirtiesContextTestExecutionListe
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -125,12 +124,13 @@ public abstract class SelenideBase {
             throw new RuntimeException("Browser Setting Wrong Value = " + properties.getBrowser());
         }
 
+        WebDriverRunner.setWebDriver(driver);
         //以下共通的な設定群
         Configuration.fastSetValue = true;
         //スクリーンショットの設定ディレクトリ設定
         Configuration.reportsFolder = getScreenShotFolder();
 
-        Configuration.baseUrl=properties.getBaseUrl();
+        Configuration.baseUrl = properties.getBaseUrl();
     }
 
     /**
@@ -225,7 +225,6 @@ public abstract class SelenideBase {
      * ディレクトリの場合は再帰処理を行い、削除する。
      *
      * @param delTargetFile ファイルオブジェクト
-     * @throws Exception 対象のファイルオブジェクトの削除エラー
      */
     private static void recursiveDeleteFile(File delTargetFile) {
 
@@ -249,7 +248,7 @@ public abstract class SelenideBase {
      *
      * @return 実績格納フォルダの相対パス
      */
-    protected String getResultFolderRelativePath() {
+    private String getResultFolderRelativePath() {
         String fileSepalator = File.separator;
         if (fileSepalator.equals("\\")) {
             fileSepalator = "\\\\";
@@ -263,7 +262,7 @@ public abstract class SelenideBase {
      *
      * @return スクリーンショット格納フォルダパス
      */
-    protected String getScreenShotFolder() {
+    private String getScreenShotFolder() {
         return new StringBuffer(rootDir).append(File.separator).append(ResultFileTypeEnum.SecreenShot.folderNm).toString();
     }
 
@@ -284,9 +283,8 @@ public abstract class SelenideBase {
      * @param pageObjectClass   SelenideBasePageObject
      * @param <PageObjectClass> SelenideBasePageObject
      * @return 起動ページを詰めたPageObject
-     * @throws MalformedURLException URLエラー
      */
-    public <PageObjectClass extends SelenideBasePageObject> PageObjectClass open(String url, Class<PageObjectClass> pageObjectClass){
+    public <PageObjectClass extends SelenideBasePageObject> PageObjectClass open(String url, Class<PageObjectClass> pageObjectClass) {
 
         PageObjectClass pageObject = Selenide.open(url, pageObjectClass);
 
@@ -338,7 +336,7 @@ public abstract class SelenideBase {
         waitForUpload.until(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver _driver) {
                 //ファイル名からダウンロード中か否かを判定
-                return isDownloadFinish( getLatestFile(downloadDir));
+                return isDownloadFinish(getLatestFile(downloadDir));
             }
         });
         File retFile = getLatestFile(downloadDir);

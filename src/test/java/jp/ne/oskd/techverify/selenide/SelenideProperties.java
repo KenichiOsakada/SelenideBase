@@ -79,6 +79,7 @@ public class SelenideProperties {
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
     }
+
     private String baseUrl;
 
     public String getChromeDriver() {
