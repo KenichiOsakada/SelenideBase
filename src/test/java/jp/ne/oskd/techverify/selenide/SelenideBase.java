@@ -6,12 +6,15 @@ import com.codeborne.selenide.WebDriverRunner;
 import com.codeborne.selenide.junit.TextReport;
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import io.netty.util.internal.StringUtil;
+import lombok.Data;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
+import org.openqa.selenium.Alert;
+import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -25,8 +28,8 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -45,6 +48,7 @@ import static org.junit.Assert.assertEquals;
         DbUnitTestExecutionListener.class})
 public abstract class SelenideBase {
 
+
     /**
      * ファイルの種別
      */
@@ -56,6 +60,13 @@ public abstract class SelenideBase {
         ResultFileTypeEnum(String folderNm) {
             this.folderNm = folderNm;
         }
+    }
+
+    /**
+     * ファイルの種別
+     */
+    protected enum FileNameMatchMethod {
+        FullName, RegExp;
     }
 
     /**
@@ -331,15 +342,16 @@ public abstract class SelenideBase {
     public File getLatestDownloadFile() {
         final File downloadDir = new File(getFileDownloadPath());
 
-        WebDriverWait waitForUpload = new WebDriverWait(driver, 1000);
+        //TODO パラメータ化
+        WebDriverWait waitForUpload = new WebDriverWait(driver, 10);
 
         waitForUpload.until(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver _driver) {
                 //ファイル名からダウンロード中か否かを判定
-                return isDownloadFinish(getLatestFile(downloadDir));
+                return isDownloadFinish(getLatestFile(downloadDir.listFiles()));
             }
         });
-        File retFile = getLatestFile(downloadDir);
+        File retFile = getLatestFile(downloadDir.listFiles());
 
         if (isDownloadFinish(retFile)) {
             return retFile;
@@ -360,23 +372,22 @@ public abstract class SelenideBase {
     /**
      * 最新ファイルを取得します
      *
-     * @param targetDir ダウンロードディレクトリ
+     * @param targetFiles 対象ファイル群
      * @return 最新ダウンロードファイル
      */
-    private File getLatestFile(File targetDir) {
-        File[] downLoaededFiles = targetDir.listFiles();
-        if (downLoaededFiles == null || downLoaededFiles.length == resultFileCount) {
+    private File getLatestFile(File[] targetFiles) {
+        if (targetFiles == null || targetFiles.length == resultFileCount) {
             return null;
         }
 
-        Arrays.sort(downLoaededFiles, new Comparator<File>() {
+        Arrays.sort(targetFiles, new Comparator<File>() {
             @Override
             public int compare(File file1, File file2) {
                 return file1.lastModified() <= file2.lastModified() ? 1 : -1;
             }
         });
 
-        return downLoaededFiles[0];
+        return targetFiles[0];
     }
 
     /**
@@ -404,7 +415,11 @@ public abstract class SelenideBase {
         return new WebDriverListenerImpl(this);
     }
 
-
+    /**
+     * Driverを返却します
+     *
+     * @return Driverを返却します
+     */
     public WebDriver getDriver() {
         return driver;
     }
@@ -431,5 +446,84 @@ public abstract class SelenideBase {
      */
     public void assertHefUrl(String message, String expected, String actualUrl) {
         assertEquals(message, properties.getBaseUrl() + expected, actualUrl);
+    }
+
+    /**
+     * Alertの表示確認を行います
+     *
+     * @return Alertの表示結果
+     */
+    public DialogResult checkAlert(final DialogResult.AlertHandling handle) {
+
+        //TODO パラメータ化
+        WebDriverWait waitForDialog = new WebDriverWait(driver, 5);
+        final DialogResult ret = new DialogResult();
+
+        //表示待機を行います
+        waitForDialog.until(new ExpectedCondition<Boolean>() {
+            public Boolean apply(WebDriver _driver) {
+                try {
+                    driver.getCurrentUrl();
+                    ret.setDisp(false);
+                    return false;
+                } catch (UnhandledAlertException e) {
+                    Alert dispAlert = driver.switchTo().alert();
+                    ret.setDisp(true);
+                    ret.setMessage(dispAlert.getText());
+                    if (handle == DialogResult.AlertHandling.Accept) {
+                        dispAlert.accept();
+                    } else {
+                        dispAlert.dismiss();
+                    }
+                    return true;
+                }
+            }
+        });
+
+        return ret;
+    }
+
+    /**
+     * @return
+     */
+    public File assertDownloadFile(final String fileNm, final FileNameMatchMethod matchMethod, int timeOutSec,String message) {
+        //TODO パラメータ化
+        WebDriverWait waitForDialog = new WebDriverWait(driver, timeOutSec);
+
+        @Data
+        class Ret{
+            private File[] targetFiles;
+        }
+
+        final  Ret ret = new Ret();
+
+        //表示待機を行います
+        waitForDialog.until(new ExpectedCondition<Boolean>() {
+            File downloadFolder = new File(getFileDownloadPath());
+
+            public Boolean apply(WebDriver _driver) {
+                File[] files = downloadFolder.listFiles(new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        if (matchMethod == FileNameMatchMethod.FullName) {
+                            return name.equals(fileNm);
+                        } else {
+                            return name.matches(fileNm);
+                        }
+                    }
+                });
+                ret.setTargetFiles(files);
+                return files.length != 0;
+            }
+        });
+
+        if(message == null){
+            message = "";
+        }
+        if(ret.getTargetFiles().length == 0){
+            throw new AssertionError("File Not Found name is " + fileNm + " " + message);
+        }
+        return getLatestFile(ret.getTargetFiles());
+
     }
 }

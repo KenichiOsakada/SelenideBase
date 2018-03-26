@@ -17,7 +17,6 @@ public class SelenideProperties {
      */
     private String driver;
 
-
     /**
      * 実績フォルダルート
      */
@@ -32,21 +31,13 @@ public class SelenideProperties {
     /**
      * 接続URLのルート
      */
+    private String baseUrl;
 
 
     /**
-     *
+     * ChromeDriver
      */
     private String chromeDriver;
-
-    public boolean isHeadless() {
-        return headless;
-    }
-
-    public void setHeadless(boolean headless) {
-        this.headless = headless;
-    }
-
 
     public String getBrowser() {
         return browser;
@@ -72,6 +63,14 @@ public class SelenideProperties {
         this.resultRoot = resultRoot;
     }
 
+    public boolean isHeadless() {
+        return headless;
+    }
+
+    public void setHeadless(boolean headless) {
+        this.headless = headless;
+    }
+
     public String getBaseUrl() {
         return baseUrl;
     }
@@ -79,8 +78,6 @@ public class SelenideProperties {
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
     }
-
-    private String baseUrl;
 
     public String getChromeDriver() {
         return chromeDriver;
