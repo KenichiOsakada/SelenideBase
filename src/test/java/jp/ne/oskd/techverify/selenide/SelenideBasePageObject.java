@@ -36,7 +36,6 @@ public abstract class SelenideBasePageObject {
      * @return タイトル
      */
     public String getTitle() {
-        return baseClass.getDriver().getTitle();
+        return baseClass.getWebDriver().getTitle();
     }
-
 }

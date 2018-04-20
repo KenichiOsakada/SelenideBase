@@ -14,6 +14,7 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.openqa.selenium.Alert;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.UnhandledAlertException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -95,7 +96,7 @@ public abstract class SelenideBase {
     /**
      * 　WebDriver
      */
-    private WebDriver driver;
+    private WebDriver webDriver;
 
     /**
      * 実績格納フォルダルート
@@ -120,7 +121,7 @@ public abstract class SelenideBase {
 
     @After
     public void after() {
-        driver.close();
+        webDriver.close();
     }
 
     /**
@@ -135,7 +136,7 @@ public abstract class SelenideBase {
             throw new RuntimeException("Browser Setting Wrong Value = " + properties.getBrowser());
         }
 
-        WebDriverRunner.setWebDriver(driver);
+        WebDriverRunner.setWebDriver(webDriver);
         //以下共通的な設定群
         Configuration.fastSetValue = true;
         //スクリーンショットの設定ディレクトリ設定
@@ -185,7 +186,7 @@ public abstract class SelenideBase {
         //ダウンロード先指定ダイアログ表示抑制
         chromePrefs.put("download.prompt_for_download", false);
         chromeOptions.setExperimentalOption("prefs", chromePrefs);
-        driver = new ChromeDriver(chromeOptions);
+        webDriver = new ChromeDriver(chromeOptions);
     }
 
     /**
@@ -343,7 +344,7 @@ public abstract class SelenideBase {
         final File downloadDir = new File(getFileDownloadPath());
 
         //TODO パラメータ化
-        WebDriverWait waitForUpload = new WebDriverWait(driver, 10);
+        WebDriverWait waitForUpload = new WebDriverWait(webDriver, 10);
 
         waitForUpload.until(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver _driver) {
@@ -420,8 +421,8 @@ public abstract class SelenideBase {
      *
      * @return Driverを返却します
      */
-    public WebDriver getDriver() {
-        return driver;
+    public WebDriver getWebDriver() {
+        return webDriver;
     }
 
 
@@ -432,7 +433,7 @@ public abstract class SelenideBase {
      * @param expected 想定
      */
     public void assertCurrentUrl(String message, String expected) {
-        assertEquals(message, properties.getResultRoot() + expected, driver.getCurrentUrl());
+        assertEquals(message, properties.getResultRoot() + expected, webDriver.getCurrentUrl());
     }
 
     /**
@@ -456,18 +457,18 @@ public abstract class SelenideBase {
     public DialogResult checkAlert(final DialogResult.AlertHandling handle) {
 
         //TODO パラメータ化
-        WebDriverWait waitForDialog = new WebDriverWait(driver, 5);
+        WebDriverWait waitForDialog = new WebDriverWait(webDriver, 5);
         final DialogResult ret = new DialogResult();
 
         //表示待機を行います
         waitForDialog.until(new ExpectedCondition<Boolean>() {
             public Boolean apply(WebDriver _driver) {
                 try {
-                    driver.getCurrentUrl();
+                    webDriver.getCurrentUrl();
                     ret.setDisp(false);
                     return false;
                 } catch (UnhandledAlertException e) {
-                    Alert dispAlert = driver.switchTo().alert();
+                    Alert dispAlert = webDriver.switchTo().alert();
                     ret.setDisp(true);
                     ret.setMessage(dispAlert.getText());
                     if (handle == DialogResult.AlertHandling.Accept) {
@@ -486,16 +487,16 @@ public abstract class SelenideBase {
     /**
      * @return
      */
-    public File assertDownloadFile(final String fileNm, final FileNameMatchMethod matchMethod, int timeOutSec,String message) {
+    public File assertDownloadFile(final String fileNm, final FileNameMatchMethod matchMethod, int timeOutSec, String message) {
         //TODO パラメータ化
-        WebDriverWait waitForDialog = new WebDriverWait(driver, timeOutSec);
+        WebDriverWait waitForDialog = new WebDriverWait(webDriver, timeOutSec);
 
         @Data
-        class Ret{
+        class Ret {
             private File[] targetFiles;
         }
 
-        final  Ret ret = new Ret();
+        final Ret ret = new Ret();
 
         //表示待機を行います
         waitForDialog.until(new ExpectedCondition<Boolean>() {
@@ -517,13 +518,23 @@ public abstract class SelenideBase {
             }
         });
 
-        if(message == null){
+        if (message == null) {
             message = "";
         }
-        if(ret.getTargetFiles().length == 0){
+        if (ret.getTargetFiles().length == 0) {
             throw new AssertionError("File Not Found name is " + fileNm + " " + message);
         }
         return getLatestFile(ret.getTargetFiles());
 
+    }
+
+    /**
+     * 名称をキーにHidden項目に値を設定します。
+     *
+     * @param hiddenItemName Hidden項目の名称
+     * @param value          値
+     */
+    public void setHiddenValueByName(String hiddenItemName, String value) {
+        ((JavascriptExecutor) webDriver).executeScript("document.getElementsByName('" + hiddenItemName + "').item(0).value = '" + value + "';");
     }
 }
