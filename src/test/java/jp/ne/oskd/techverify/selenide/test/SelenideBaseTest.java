@@ -7,6 +7,7 @@ import jp.ne.oskd.techverify.selenide.test.pageObject.TablePageObject;
 import jp.ne.oskd.techverify.selenide.test.pageObject.elementContainer.TableRow;
 import org.junit.Rule;
 import org.junit.Test;
+import org.openqa.selenium.JavascriptExecutor;
 
 import java.io.File;
 import java.util.List;
@@ -60,7 +61,8 @@ public class SelenideBaseTest extends SelenideBase {
                                 "<tr>" +
                                 "<td><a id=\"download2\" href=\"#\" download=\"test2.txt\" onclick=\"handleDownload('download2')\">DownLoad</a></td>" +
                                 "</tr>" +
-                                "</table>"))
+                                "</table>" +
+                                "<input type='hidden' name='hiddenItem' value='HiddenValue' />"))
 
         );
 
@@ -105,5 +107,10 @@ public class SelenideBaseTest extends SelenideBase {
         fileDownRow2.getDatas().get(0).getATag().click();
         File down2 = getLatestDownloadFile();
         assertEquals("FileNm2","test2.txt",down2.getName());
+
+        assertEquals("HiddenItem","HiddenValue",itemsPage.getHiddenItem().getAttribute("value"));
+//        itemsPage.getHiddenItem().setValue("SetValue");
+        setHiddenValueByName("hiddenItem","SetValue");
+        assertEquals("HiddenItem","SetValue",itemsPage.getHiddenItem().getAttribute("value"));
     }
 }
